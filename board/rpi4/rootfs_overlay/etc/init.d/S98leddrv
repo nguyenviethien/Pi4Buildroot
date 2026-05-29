@@ -1,0 +1,25 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        echo "Loading led driver..."
+        if grep -q '^gpio_led_drv ' /proc/modules 2>/dev/null; then
+            echo "gpio_led_drv already loaded, skipping"
+            exit 0
+        fi
+        insmod /root/gpio_led_drv.ko
+        ;;
+    stop)
+        rmmod gpio_led_drv 2>/dev/null || true
+        ;;
+    restart)
+        rmmod gpio_led_drv 2>/dev/null || true
+        insmod /root/gpio_led_drv.ko
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        echo "Starting distance_app..."
+        /root/distance_app &
+        ;;
+    stop)
+        killall distance_app 2>/dev/null
+        ;;
+    restart)
+        killall distance_app 2>/dev/null
+        /root/distance_app &
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,77 @@
+#!/bin/sh
+
+WIFI_MODULE="brcmfmac"
+WIFI_IFACE="wlan0"
+WPA_CONF="/etc/wpa_supplicant.conf"
+WPA_PIDFILE="/run/wpa_supplicant.${WIFI_IFACE}.pid"
+UDHCPC_PIDFILE="/run/udhcpc.${WIFI_IFACE}.pid"
+
+start() {
+    printf 'Starting wifi: '
+
+    modprobe "$WIFI_MODULE" >/dev/null 2>&1 || true
+
+    i=0
+    while [ "$i" -lt 20 ]; do
+        if [ -d "/sys/class/net/${WIFI_IFACE}" ]; then
+            ip link set "$WIFI_IFACE" up >/dev/null 2>&1 || true
+
+            start-stop-daemon -K -p "$WPA_PIDFILE" >/dev/null 2>&1 || true
+            start-stop-daemon -K -p "$UDHCPC_PIDFILE" >/dev/null 2>&1 || true
+
+            wpa_supplicant -B -i "$WIFI_IFACE" -c "$WPA_CONF" -P "$WPA_PIDFILE" >/dev/null 2>&1 || {
+                echo "WPA-FAIL"
+                return 1
+            }
+
+            j=0
+            while [ "$j" -lt 20 ]; do
+                if iw dev "$WIFI_IFACE" link 2>/dev/null | grep -q '^Connected to '; then
+                    udhcpc -i "$WIFI_IFACE" -p "$UDHCPC_PIDFILE" -b -q >/dev/null 2>&1 || {
+                        echo "DHCP-FAIL"
+                        return 1
+                    }
+                    echo "OK"
+                    return 0
+                fi
+                j=$((j + 1))
+                sleep 1
+            done
+
+            echo "ASSOC-FAIL"
+            return 1
+        fi
+        i=$((i + 1))
+        sleep 1
+    done
+
+    echo "NO-IFACE"
+    return 1
+}
+
+stop() {
+    printf 'Stopping wifi: '
+    start-stop-daemon -K -p "$UDHCPC_PIDFILE" >/dev/null 2>&1 || true
+    start-stop-daemon -K -p "$WPA_PIDFILE" >/dev/null 2>&1 || true
+    ip link set "$WIFI_IFACE" down >/dev/null 2>&1 || true
+    echo "OK"
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

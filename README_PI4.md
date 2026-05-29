@@ -87,3 +87,46 @@ cd ~/Pi4Buildroot/buildroot
 - The repository currently includes prebuilt binaries and a prebuilt kernel module.
 - The Wi-Fi configuration file contains plain-text credentials and should be reviewed before wider sharing.
 - The custom overlay still depends on local Buildroot configuration selecting `board/rpi4/rootfs_overlay` as the rootfs overlay path.
+
+## Implementation Steps
+
+The following work was completed in this repository:
+
+1. Identified that the actual Git repository is `buildroot/` under `/home/hien/Pi4Buildroot`.
+2. Reviewed the untracked Raspberry Pi 4 additions before making any Git changes.
+3. Verified the custom overlay contents under `board/rpi4/rootfs_overlay/`.
+4. Confirmed the added boot scripts:
+   - `S42wifi` for Wi-Fi startup
+   - `S98leddrv` for loading `gpio_led_drv.ko`
+   - `S99distance` for starting `distance_app`
+5. Reviewed the network configuration files:
+   - `etc/network/interfaces`
+   - `etc/modules-load.d/brcmfmac.conf`
+   - `etc/wpa_supplicant.conf`
+6. Verified the application artifacts placed into the image:
+   - `distance_app`
+   - `led_test`
+   - `gpio_led_drv.ko`
+7. Reviewed `build_app.sh`, which rebuilds `distance_app` from `~/Pi4App/main.c`, copies it into the overlay, and rebuilds Buildroot.
+8. Added `PI4_UPDATE.md` to summarize the Raspberry Pi 4 custom update.
+9. Committed the Pi4 overlay and helper script with commit:
+   - `3b042bcc2b` `board/rpi4: add custom overlay and deployment notes`
+10. Created SSH access for GitHub on this machine and configured the `personal` remote to:
+   - `git@github.com:nguyenviethien/Pi4Buildroot.git`
+11. Verified GitHub SSH authentication for the `nguyenviethien` account.
+12. Attempted to push to remote `master`, but the remote already had an existing unrelated `master` branch history.
+13. Added this `README_PI4.md` so the repository contains a clear description of:
+   - what was added
+   - what each app does
+   - how boot-time startup works
+   - how the image is rebuilt
+14. Committed this README with commit:
+   - `2f299580ed` `docs: add Pi4 custom README`
+15. Pushed the custom work to the remote branch:
+   - `pi4-buildroot`
+
+## Git Result
+
+- Remote repository: `git@github.com:nguyenviethien/Pi4Buildroot.git`
+- Remote branch containing the custom work: `pi4-buildroot`
+- The upstream-style Buildroot `README` file was intentionally left unchanged.
